@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const SITE_URL = (process.env.SITE_URL || 'https://faveradar.xyz').replace(/\/+$/, '');
+export const SITE_URL = (process.env.SITE_URL || 'https://www.faveradar.xyz').replace(/\/+$/, '');
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const RESERVED_SLUGS = ['dev', 'pages', 'seo', 'tops', 'widget', 'sitemap', 'robots', 'index'];

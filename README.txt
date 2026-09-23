@@ -70,10 +70,10 @@ SEO-страницы
 ------------
 Обычные HTML-страницы для Google прямо на домене виджета. Сайт и сервер данных в этом не участвуют:
 всё хранится в этой папке и выкладывается на Vercel вместе с виджетом.
-  https://faveradar.xyz/<адрес>      страница топа, например https://faveradar.xyz/best-onlyfans-creators
-  https://faveradar.xyz/tops         список всех опубликованных топов (создаётся сам)
-  https://faveradar.xyz/sitemap.xml  карта сайта — добавьте её в Google Search Console
-  https://faveradar.xyz/robots.txt   разрешает индексацию и указывает на sitemap
+  https://www.faveradar.xyz/<адрес>      страница топа, например https://www.faveradar.xyz/best-onlyfans-creators
+  https://www.faveradar.xyz/tops         список всех опубликованных топов (создаётся сам)
+  https://www.faveradar.xyz/sitemap.xml  карта сайта — добавьте её в Google Search Console
+  https://www.faveradar.xyz/robots.txt   разрешает индексацию и указывает на sitemap
 
 Как править:
   1. Дважды щёлкните seo-editor.cmd (или start-dev.cmd и затем http://localhost:5173/dev/seo.html;
