@@ -1,0 +1,9 @@
+README.txt
+*.md
+# local development only
+dev/
+package.json
+.claude/
+*.cmd
+# SEO data and build script: only the generated pages/, sitemap.xml and robots.txt are published
+seo/

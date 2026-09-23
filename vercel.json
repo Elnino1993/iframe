@@ -1,0 +1,55 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": ".",
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/tops", "destination": "/pages/tops.html" },
+    { "source": "/:slug([a-z0-9]+(?:-[a-z0-9]+)*)", "destination": "/pages/:slug.html" }
+  ],
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors *" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/((?!sitemap\\.xml$|robots\\.txt$|pages/).+\\..+)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors *" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/:slug([a-z0-9]+(?:-[a-z0-9]+)*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "default-src 'none'; img-src https: data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/(sitemap\\.xml|robots\\.txt)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/pages/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" },
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>SEO-страницы — редактор</title>
+    <link rel="stylesheet" href="playground.css" />
+    <link rel="stylesheet" href="seo-editor.css" />
+    <script type="module" src="seo-editor.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <b>FaveRadar · SEO-страницы</b>
+      <span class="muted">Страницы для Google на faveradar.xyz/&lt;адрес&gt;. Данные — в папке <code>seo/</code>, сайт не участвует.</span>
+      <span class="top-actions">
+        <a href="/dev/">← Песочница виджета</a>
+        <a href="/dev/preview/tops" target="_blank" rel="noopener">Превью /tops ↗</a>
+        <button type="button" id="build" class="primary">Собрать страницы</button>
+      </span>
+    </header>
+    <div id="build-out" class="build-out" role="status" aria-live="polite" hidden></div>
+    <nav class="tabs" role="tablist" aria-label="Разделы">
+      <button type="button" role="tab" id="tab-pages" aria-controls="panel-pages" aria-selected="true">Страницы</button>
+      <button type="button" role="tab" id="tab-creators" aria-controls="panel-creators" aria-selected="false" tabindex="-1">Анкеты</button>
+    </nav>
+    <main class="seo-main">
+      <section id="panel-pages" role="tabpanel" aria-labelledby="tab-pages"></section>
+      <section id="panel-creators" role="tabpanel" aria-labelledby="tab-creators" hidden></section>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

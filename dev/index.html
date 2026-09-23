@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Виджет — песочница</title>
+    <link rel="stylesheet" href="playground.css" />
+    <script type="module" src="playground.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <b>FaveRadar виджет · песочница</b>
+      <span class="muted">Правьте <code>widget.js</code> / <code>widget.css</code> и нажимайте «Обновить». Данные демо, подпись не проверяется.</span>
+      <a href="/dev/seo.html">SEO-страницы и свои анкеты →</a>
+    </header>
+    <main class="layout">
+      <form id="f" class="panel" autocomplete="off">
+        <fieldset>
+          <legend>Что показывать</legend>
+          <label>Вид виджета
+            <select name="view">
+              <option value="top">Топ (автоматический)</option>
+              <option value="list">Моя подборка (лендинг)</option>
+              <option value="geo">Топы по месту (хаб)</option>
+              <option value="creator">Карточка креатора</option>
+            </select></label>
+          <label data-for="top">Рейтинг
+            <select name="type">
+              <option value="popular">Самые популярные</option>
+              <option value="growth">Набирают популярность</option>
+              <option value="new">Новые</option>
+              <option value="free">Топ бесплатных</option>
+              <option value="value">Самые выгодные</option>
+              <option value="earnings">По доходу (старый)</option>
+            </select></label>
+          <label data-for="top">Страна <select name="country"><option value="">Любая</option></select></label>
+          <label data-for="top">Город <select name="city"><option value="">Любой</option></select></label>
+          <label data-for="list">Подборка
+            <select name="list">
+              <option value="lst_demo00000001">Top 10 creators this week (EN)</option>
+              <option value="lst_demo00000002">Top creators in Kyiv (EN)</option>
+            </select></label>
+          <label data-for="creator">Креатор <select name="u"></select></label>
+        </fieldset>
+
+        <fieldset data-for="top list">
+          <legend>Карточки</legend>
+          <label>Количество анкет <input name="count" type="number" min="1" max="50" value="10" /></label>
+          <label class="inline"><input type="checkbox" name="countAll" /> Все анкеты</label>
+          <label>Вид
+            <select name="layout">
+              <option value="cards">Карточки</option>
+              <option value="photos">По 2 в ряд, горизонтальное фото</option>
+              <option value="list">Компактный список</option>
+            </select></label>
+          <div class="checks" id="fields"></div>
+          <label class="inline"><input type="checkbox" name="photos" checked /> Фото анкет (StaySlutty); без галочки — заглушки</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Оформление</legend>
+          <label>Тема
+            <select name="theme"><option value="dark">Тёмная</option><option value="light">Светлая</option><option value="auto">Как в системе</option></select></label>
+          <label>Язык
+            <select name="lang"><option value="en" selected>English</option><option value="ru">Русский</option><option value="auto">Язык браузера (→ English)</option></select></label>
+          <label>Цвет акцента
+            <span class="row"><input name="accent" type="color" value="#fd37b7" /><label class="inline"><input type="checkbox" name="useAccent" /> свой цвет</label></span></label>
+          <div class="swatches" id="swatches"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Превью</legend>
+          <div class="seg" id="widths">
+            <button type="button" data-w="375">Телефон</button>
+            <button type="button" data-w="768">Планшет</button>
+            <button type="button" data-w="0" aria-pressed="true">Во всю ширину</button>
+          </div>
+          <div class="row">
+            <button type="button" id="reload" class="primary">Обновить</button>
+            <a id="open" target="_blank" rel="noopener">Открыть отдельно ↗</a>
+          </div>
+          <label class="inline"><input type="checkbox" name="age" checked /> Сразу пропускать 18+</label>
+        </fieldset>
+        <p class="muted small">Ссылка превью: <code id="url"></code></p>
+      </form>
+      <section class="stage"><iframe id="frame" title="Превью виджета"></iframe></section>
+    </main>
+  </body>
+</html>

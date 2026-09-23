@@ -1,0 +1,12 @@
+{
+  "name": "faveradar-widget",
+  "private": true,
+  "description": "FaveRadar widget block (static). Local development: npm run dev",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev/server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
