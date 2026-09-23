@@ -21,8 +21,6 @@
       invalid: 'This link is not valid. Ask the site administrator for a working link.',
       expired: 'This link has expired. Ask the site administrator for a new one.',
       failed: 'Could not load data.', retry: 'Try again', expires: 'Link valid until {d}',
-      gateTitle: 'Adults only', gateText: 'This widget lists adult content creators. Confirm that you are 18 or older.',
-      gateYes: 'I am 18 or older', gateNo: 'Leave',
       cta: 'View profile', listTitle: 'Top creators', subscription: 'per month',
       priceLabel: 'Subscription', likesLabel: 'Likes', incomeLabel: 'Income / mo', postsLabel: 'Posts',
       subsLabel: 'Subscribers', verified: 'Verified',
@@ -39,8 +37,6 @@
       invalid: 'Ссылка недействительна. Попросите у администратора рабочую ссылку.',
       expired: 'Срок действия ссылки истёк. Попросите у администратора новую.',
       failed: 'Не удалось загрузить данные.', retry: 'Повторить', expires: 'Ссылка действует до {d}',
-      gateTitle: 'Только для взрослых', gateText: 'Этот виджет показывает авторов контента для взрослых. Подтвердите, что вам есть 18 лет.',
-      gateYes: 'Мне есть 18 лет', gateNo: 'Выйти',
       cta: 'Смотреть профиль', listTitle: 'Топ анкет', subscription: 'в месяц',
       priceLabel: 'Подписка', likesLabel: 'Лайки', incomeLabel: 'Доход / мес', postsLabel: 'Посты',
       subsLabel: 'Подписчики', verified: 'Верифицирован',
@@ -490,54 +486,11 @@
       .catch(function () { showError(t.failed, true); });
   }
 
-  // ---------- 18+ confirmation (stored per browser on the widget's domain)
-  function ageConfirmed() {
-    try { return localStorage.getItem('fr:age') === 'true'; } catch (e) { return false; }
-  }
-  function gate(onYes) {
-    var g = el('div', 'gate');
-    var card = el('div', 'gate-card');
-    card.setAttribute('role', 'dialog');
-    card.setAttribute('aria-modal', 'true');
-    card.setAttribute('aria-labelledby', 'gate-title');
-    card.appendChild(el('span', 'age', '18+'));
-    var h = el('h1', null, t.gateTitle);
-    h.id = 'gate-title';
-    card.appendChild(h);
-    card.appendChild(el('p', 'muted', t.gateText));
-    var actions = el('div', 'gate-actions');
-    var yes = el('button', 'btn primary', t.gateYes);
-    yes.type = 'button';
-    var no = el('button', 'btn', t.gateNo);
-    no.type = 'button';
-    actions.appendChild(yes);
-    actions.appendChild(no);
-    card.appendChild(actions);
-    g.appendChild(card);
-    document.body.appendChild(g);
-    yes.focus();
-    g.addEventListener('keydown', function (e) {
-      if (e.key !== 'Tab') return;
-      e.preventDefault();
-      (document.activeElement === yes ? no : yes).focus();
-    });
-    yes.addEventListener('click', function () {
-      try { localStorage.setItem('fr:age', 'true'); } catch (e) { /* private mode: ask again next time */ }
-      g.remove();
-      onYes();
-    });
-    no.addEventListener('click', function () {
-      app.innerHTML = '';
-      g.remove();
-    });
-  }
-
   document.documentElement.lang = lang;
-  // theme from the link right away, so the 18+ screen and skeleton already match it
+  // theme from the link right away, so the loading skeleton already matches it
   var earlyTheme = params.get('theme');
   if (earlyTheme === 'light' || earlyTheme === 'dark') document.documentElement.dataset.theme = earlyTheme;
   else if (earlyTheme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme = 'light';
   reportHeight();
-  if (ageConfirmed()) load();
-  else gate(load);
+  load();
 })();
