@@ -496,6 +496,54 @@
   var earlyTheme = params.get('theme');
   if (earlyTheme === 'light' || earlyTheme === 'dark') document.documentElement.dataset.theme = earlyTheme;
   else if (earlyTheme === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme = 'light';
+
+  // ---------- Telegram notices (visits and profile clicks) via /api/notify on this domain
+  // sendBeacon survives the navigation to the profile; plain-text body avoids a CORS preflight.
+  function report(ev) {
+    var body = JSON.stringify(ev);
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon('/api/notify', body)) return;
+    } catch (e) { /* fall through */ }
+    try {
+      fetch('/api/notify', { method: 'POST', body: body, keepalive: true, credentials: 'omit' }).catch(function () {});
+    } catch (e) { /* never break the page */ }
+  }
+  var framed = window.top !== window;
+  // inside an iframe document.referrer is the page that embeds us, not where the visitor came from
+  var origin = { referrer: framed ? '' : document.referrer, host: framed ? document.referrer : '' };
+  function reportVisit(page) {
+    var key = 'fr:seen:' + page;
+    try {
+      if (sessionStorage.getItem(key)) return; // one notice per page per browser session
+      sessionStorage.setItem(key, '1');
+    } catch (e) { /* storage blocked: still report */ }
+    report({ type: 'visit', page: page, referrer: origin.referrer, host: origin.host });
+  }
+  function watchClicks(scope, page, selector) {
+    var onClick = function (e) {
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var a = e.target.closest && e.target.closest(selector);
+      if (!a || !scope.contains(a)) return;
+      var card = a.closest('.tile, .item');
+      var name = card && card.querySelector('.name-text');
+      report({ type: 'click', page: page, label: name ? name.textContent : '', dest: a.href, host: origin.host });
+    };
+    scope.addEventListener('click', onClick);
+    scope.addEventListener('auxclick', onClick); // middle-click opens a new tab too
+  }
+
+  /** What the visitor opened, without the signature: e.g. "widget ?view=top&type=popular&country=Ukraine". */
+  function widgetPage() {
+    var p = new URLSearchParams(location.search);
+    ['sig', 'exp', 'autoheight'].forEach(function (k) { p.delete(k); });
+    var q = p.toString();
+    return 'widget' + (q ? ' ?' + q : '');
+  }
+
   reportHeight();
   load();
+  if (params.get('sig')) {
+    reportVisit(widgetPage());
+    watchClicks(app, widgetPage(), 'a.cta, a.shot, a.name-link');
+  }
 })();

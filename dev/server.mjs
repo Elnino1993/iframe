@@ -17,6 +17,7 @@ import {
   SLUG_RE, SeoError, loadData, writeJsonAtomic, dataPath, validatePage, validateCreator, renderPage, renderIndex, build,
 } from '../seo/build.mjs';
 import { optimizeImages, localImages } from '../seo/images.mjs';
+import { cleanEvent, formatMessage } from '../api/notify.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 5173;
@@ -151,6 +152,15 @@ const server = http.createServer(async (req, res) => {
       console.error(err);
       return sendJson(res, 500, { error: err.message });
     }
+  }
+  if (p === '/api/notify' && req.method === 'POST') {
+    // dev: the Telegram notice is printed here instead of being sent (api/notify.mjs does the sending on Vercel)
+    let raw = '';
+    for await (const c of req) if ((raw += c).length > 8192) break;
+    const ev = cleanEvent(raw);
+    if (!ev) return send(res, 400, '{"ok":false}', 'application/json');
+    console.log(`\n[telegram, dev — not sent]\n${formatMessage(ev, req.headers)}\n`);
+    return send(res, 200, '{"ok":true,"dev":true}', 'application/json');
   }
   if (p === '/widget-api/data') {
     const out = widgetData(url.search, `http://${req.headers.host}`);
