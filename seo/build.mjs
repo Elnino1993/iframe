@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { localImages, optimizeImages } from './images.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SITE_URL = (process.env.SITE_URL || 'https://www.faveradar.xyz').replace(/\/+$/, '');
@@ -225,12 +226,28 @@ ${bodyHtml}
 `;
 }
 
-function tile(c, i) {
+// the tile is ~260 px wide on desktop (4 per row) and about half the screen on phones
+const SIZES = '(max-width: 520px) 46vw, 260px';
+
+/** Photo markup: light local copies (AVIF/WebP, 320/640 px) once built, else the original URL.
+ *  The first row loads at once (the first two with high priority), the rest when scrolled near. */
+function picture(c, i, base) {
+  const load = i < 4 ? '' : ' loading="lazy"';
+  const prio = i < 2 ? ' fetchpriority="high"' : '';
+  const attrs = `alt="${esc(`${c.name} OnlyFans`)}" width="400" height="500" decoding="async"${load}${prio}`;
+  if (!base) return `<img src="${esc(safeHttps(c.photo))}" ${attrs} referrerpolicy="no-referrer">`;
+  const set = (f) => `${base}-320.${f} 320w, ${base}-640.${f} 640w`;
+  return `<picture><source type="image/avif" srcset="${set('avif')}" sizes="${SIZES}">`
+    + `<source type="image/webp" srcset="${set('webp')}" sizes="${SIZES}">`
+    + `<img src="${base}-640.webp" ${attrs}></picture>`;
+}
+
+function tile(c, i, images) {
   const href = safeHttps(c.link);
   const photo = safeHttps(c.photo);
   const rel = 'nofollow sponsored noopener';
   const shot = photo
-    ? `<img src="${esc(photo)}" alt="${esc(`${c.name} OnlyFans`)}" width="400" height="500"${i < 4 ? '' : ' loading="lazy"'} referrerpolicy="no-referrer">`
+    ? picture(c, i, images && images.get(String(c.username).toLowerCase()))
     : `<span class="shot-initials">${esc(initials(c.name))}</span>`;
   const meta = ['@' + c.username, c.place].filter(Boolean).join(' · ');
   const bio = String(c.bio || '').replace(/\s+/g, ' ').trim();
@@ -249,7 +266,7 @@ export function creatorsOf(page, creators) {
 }
 
 /** One page as HTML (published or not: the editor previews drafts too). */
-export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL } = {}) {
+export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL, images = null } = {}) {
   const items = creatorsOf(page, creators);
   const url = `${siteUrl}/${page.slug}`;
   const title = page.title || page.h1;
@@ -273,7 +290,7 @@ export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL
     },
   ];
   const grid = items.length
-    ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map(tile).join('\n')}\n</ol>`
+    ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map((c, i) => tile(c, i, images)).join('\n')}\n</ol>`
     : '<p class="state">Nobody here yet.</p>';
   const relatedHtml = related.length
     ? `<section class="related" aria-labelledby="related-t"><h2 id="related-t">More tops</h2><ul>${related.map((p) => `<li><a href="/${esc(p.slug)}">${esc(p.h1)}</a></li>`).join('')}</ul></section>`
@@ -348,11 +365,12 @@ export function build({ root = ROOT, siteUrl = SITE_URL, data = loadData(root) }
     fs.writeFileSync(path.join(root, rel), content);
     written.push(rel.replace(/\\/g, '/'));
   };
+  const images = localImages(root, creators);
   const keep = new Set(['tops.html']);
   for (const p of pages) {
     if (!p.published || !SLUG_RE.test(p.slug) || RESERVED_SLUGS.includes(p.slug)) continue;
     keep.add(`${p.slug}.html`);
-    put(path.join('pages', `${p.slug}.html`), renderPage(p, { pages, creators, siteUrl }));
+    put(path.join('pages', `${p.slug}.html`), renderPage(p, { pages, creators, siteUrl, images }));
   }
   put(path.join('pages', 'tops.html'), renderIndex({ pages, creators, siteUrl }));
   put('sitemap.xml', renderSitemap({ pages, siteUrl }));
@@ -368,6 +386,8 @@ export function build({ root = ROOT, siteUrl = SITE_URL, data = loadData(root) }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const img = await optimizeImages({ root: ROOT, creators: loadData(ROOT).creators });
+  console.log(`[img] made ${img.made.length}, removed ${img.removed.length}${img.failed.length ? `, failed: ${img.failed.join('; ')}` : ''}${img.skipped ? ` (${img.skipped})` : ''}`);
   const { written, removed } = build();
   console.log(`[seo] ${SITE_URL}: written ${written.length} file(s)${removed.length ? `, removed ${removed.join(', ')}` : ''}`);
   for (const f of written) console.log(`  ${f}`);

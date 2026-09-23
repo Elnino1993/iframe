@@ -473,7 +473,11 @@ $('#build').addEventListener('click', async (e) => {
   try {
     const r = await api('/dev-api/seo/build', {});
     out.classList.remove('err');
+    const img = r.images || { made: [], failed: [], removed: [] };
+    const imgLine = `Фото: сжато ${img.made.length}${img.removed.length ? `, удалено старых ${img.removed.length}` : ''}`
+      + `${img.failed.length ? ` · не удалось: ${esc(img.failed.join('; '))}` : ''}${img.skipped ? ` · ${esc(img.skipped)}` : ''}`;
     out.innerHTML = `<b>Собрано файлов: ${r.written.length}</b>${r.removed.length ? ` · удалено устаревших: ${r.removed.length}` : ''}
+      <br><span class="hint">${imgLine}</span>
       <ul>${[...r.written.map((f) => `<li><a href="/${esc(f === 'pages/tops.html' ? 'tops' : f.replace(/^pages\/(.*)\.html$/, '$1'))}" target="_blank" rel="noopener">${esc(f)}</a></li>`),
         ...r.removed.map((f) => `<li class="muted">удалён ${esc(f)}</li>`)].join('')}</ul>
       <span class="hint">Теперь выложите папку на Vercel — страницы появятся на faveradar.xyz.</span>`;

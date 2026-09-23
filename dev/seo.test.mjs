@@ -118,3 +118,19 @@ test('seed data is valid', () => {
   for (const c of own) assert.deepEqual(validateCreator(c), c, c.username);
   for (const p of pages) validatePage(p, [], own);
 });
+
+test('photos: light AVIF/WebP copies when built, original URL otherwise; first row eager', async () => {
+  const { imageBase } = await import('../seo/images.mjs');
+  const base = imageBase('alice_x', 'https://img.example.com/a.jpg');
+  assert.match(base, /^\/img\/c\/alice_x-[0-9a-f]{10}$/);
+  assert.notEqual(base, imageBase('alice_x', 'https://img.example.com/other.jpg'), 'new photo, new file name');
+
+  const withCopies = renderPage(page(), { creators, siteUrl: SITE, images: new Map([['alice_x', base]]) });
+  assert.match(withCopies, new RegExp(`<source type="image/avif" srcset="${base}-320\.avif 320w, ${base}-640\.avif 640w"`));
+  assert.match(withCopies, new RegExp(`<img src="${base}-640\.webp"[^>]*fetchpriority="high"`));
+  assert.doesNotMatch(withCopies, /img\.example\.com\/a\.jpg"[^>]*decoding/, 'no original URL in the tile once copies exist');
+
+  const plain = renderPage(page(), { creators, siteUrl: SITE });
+  assert.match(plain, /<img src="https:\/\/img\.example\.com\/a\.jpg"[^>]*decoding="async"/);
+  assert.doesNotMatch(plain, /loading="lazy"/, 'first row is not lazy');
+});

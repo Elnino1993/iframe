@@ -16,6 +16,7 @@ import { widgetData, profileUrl } from './mock.mjs';
 import {
   SLUG_RE, SeoError, loadData, writeJsonAtomic, dataPath, validatePage, validateCreator, renderPage, renderIndex, build,
 } from '../seo/build.mjs';
+import { optimizeImages, localImages } from '../seo/images.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 5173;
@@ -124,7 +125,9 @@ async function seoApi(req, res, p) {
     return sendJson(res, 200, { ok: true, pagesTouched });
   }
   if (p === '/dev-api/seo/build') {
-    return sendJson(res, 200, build({ root: ROOT, data }));
+    // light photo copies first (downloads only new photos), then the HTML that points at them
+    const images = await optimizeImages({ root: ROOT, creators: data.creators });
+    return sendJson(res, 200, { ...build({ root: ROOT, data }), images });
   }
   return sendJson(res, 404, { error: 'Not found' });
 }
@@ -175,7 +178,7 @@ const server = http.createServer(async (req, res) => {
     const data = loadData(ROOT);
     if (preview[1] === 'tops') return send(res, 200, renderIndex(data), TYPES['.html']);
     const page = data.pages.find((x) => x.slug === preview[1]);
-    return page ? send(res, 200, renderPage(page, data), TYPES['.html']) : send(res, 404, 'Такой страницы нет в seo/pages.json');
+    return page ? send(res, 200, renderPage(page, { ...data, images: localImages(ROOT, data.creators) }), TYPES['.html']) : send(res, 404, 'Такой страницы нет в seo/pages.json');
   }
   // built SEO pages, like the vercel.json rewrites: /tops and /<slug> → pages/<slug>.html
   if (p === '/tops') return sendFile(res, path.join(ROOT, 'pages', 'tops.html'));

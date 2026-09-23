@@ -15,7 +15,7 @@
     var imgs = document.querySelectorAll('.shot img');
     Array.prototype.forEach.call(imgs, function (img) {
       var fallback = function () {
-        var box = img.parentNode;
+        var box = img.closest('.shot') || img.parentNode;
         var tile = box && box.closest ? box.closest('.tile') : null;
         var nameNode = tile && tile.querySelector('.name-text');
         var name = nameNode ? nameNode.textContent : '';

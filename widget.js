@@ -91,11 +91,13 @@
   function avatar(name, username, url) {
     if (safeImg(url)) {
       var img = el('img', 'avatar');
-      img.src = url;
       img.alt = '';
+      // src last: set earlier, the browser starts loading before it knows the image is lazy / referrer-free
       img.loading = 'lazy';
+      img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
       img.addEventListener('error', function () { img.replaceWith(avatar(name, username)); });
+      img.src = url;
       return img;
     }
     var a = el('span', 'avatar', initials(name, username));
@@ -256,11 +258,14 @@
     };
     if (safeImg(url)) {
       var img = el('img');
-      img.src = url;
       img.alt = '';
-      img.loading = 'lazy';
+      // first row at once (top two with priority), the rest only when scrolled near; decode off the main path
+      if (!(c.rank <= 4)) img.loading = 'lazy';
+      if (c.rank <= 2) img.fetchPriority = 'high';
+      img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
       img.addEventListener('error', fallback);
+      img.src = url;
       box.appendChild(img);
     } else {
       fallback();
