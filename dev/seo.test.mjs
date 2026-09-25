@@ -53,7 +53,7 @@ test('"## " blocks: heading, then the rest of the block as a paragraph', () => {
   assert.equal(paragraphs('## <b>x</b>'), '<h2>&lt;b&gt;x&lt;/b&gt;</h2>');
 });
 
-test('rendering: meta, canonical, JSON-LD, tiles link straight to the creator, everything escaped', () => {
+test('rendering: meta, canonical, JSON-LD, tiles link to the creator profile, everything escaped', () => {
   const evil = '</script><script>alert(1)</script> & "q"';
   const html = renderPage(page({ h1: evil, title: 'T <i>', description: '"><img src=x onerror=alert(1)>', keywords: 'a, b', intro: evil, outro: `## ${evil}\n${evil}` }), { pages: [], creators, siteUrl: SITE });
   assert.doesNotMatch(html, /<script>alert/);
@@ -67,7 +67,9 @@ test('rendering: meta, canonical, JSON-LD, tiles link straight to the creator, e
   assert.match(html, /<nav class="crumbs"[^>]*><a href="\/tops">Tops<\/a>/);
   const tiles = html.match(/<li class="tile">[\s\S]*?<\/li>/g);
   assert.equal(tiles.length, 2);
-  assert.match(tiles[0], /href="https:\/\/onlyfans\.com\/alice_x\/c12" target="_blank" rel="nofollow sponsored noopener"/);
+  assert.match(tiles[0], /href="https:\/\/faveradar\.com\/#\/c\/alice_x" target="_blank" rel="noopener"/, 'profile on the FaveRadar site');
+  const direct = renderPage(page(), { creators, siteUrl: SITE, profileSite: '' });
+  assert.match(direct, /href="https:\/\/onlyfans\.com\/alice_x\/c12" target="_blank" rel="nofollow sponsored noopener"/, 'PROFILE_SITE empty → OnlyFans');
   assert.match(tiles[0], /alt="Alice OnlyFans"/);
   assert.match(tiles[0], /class="tick"/);
   assert.match(tiles[0], /<p class="bio-short">Hi &lt;there&gt;<\/p>/);
@@ -76,7 +78,7 @@ test('rendering: meta, canonical, JSON-LD, tiles link straight to the creator, e
   assert.match(tiles[1], /<span class="shot-initials">B<\/span>/, 'no photo → initials');
   const lds = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
   assert.deepEqual(lds.map((x) => x['@type']), ['BreadcrumbList', 'ItemList']);
-  assert.equal(lds[1].itemListElement[0].url, 'https://onlyfans.com/alice_x/c12');
+  assert.equal(lds[1].itemListElement[0].url, 'https://faveradar.com/#/c/alice_x');
 });
 
 test('build: published pages, /tops, sitemap of published pages only, robots, stale pages removed', () => {

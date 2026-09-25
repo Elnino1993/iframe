@@ -16,6 +16,15 @@ import { localImages, optimizeImages } from './images.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SITE_URL = (process.env.SITE_URL || 'https://www.faveradar.xyz').replace(/\/+$/, '');
+// Where "View profile" and the photo lead: the creator's page on the FaveRadar site, which then links to OnlyFans.
+// PROFILE_SITE= (empty) links straight to the OnlyFans link instead.
+export const PROFILE_SITE = (process.env.PROFILE_SITE ?? 'https://faveradar.com').replace(/\/+$/, '');
+
+/** Profile link of a creator: FaveRadar page when PROFILE_SITE is set, else the creator's own OnlyFans link. */
+export function profileHref(c, profileSite = PROFILE_SITE) {
+  if (!profileSite) return safeHttps(c.link);
+  return `${profileSite}/#/c/${encodeURIComponent(c.username)}`;
+}
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const RESERVED_SLUGS = ['dev', 'pages', 'seo', 'tops', 'home', 'widget', 'sitemap', 'robots', 'index', 'api', 'img'];
@@ -242,10 +251,11 @@ function picture(c, i, base) {
     + `<img src="${base}-640.webp" ${attrs}></picture>`;
 }
 
-function tile(c, i, images) {
-  const href = safeHttps(c.link);
+function tile(c, i, images, profileSite) {
+  const href = profileHref(c, profileSite);
   const photo = safeHttps(c.photo);
-  const rel = 'nofollow sponsored noopener';
+  // our own site passes on link value; a direct OnlyFans link stays marked as sponsored
+  const rel = profileSite ? 'noopener' : 'nofollow sponsored noopener';
   const shot = photo
     ? picture(c, i, images && images.get(String(c.username).toLowerCase()))
     : `<span class="shot-initials">${esc(initials(c.name))}</span>`;
@@ -266,7 +276,7 @@ export function creatorsOf(page, creators) {
 }
 
 /** One page as HTML (published or not: the editor previews drafts too). */
-export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL, images = null, url: pageUrl = '', robots = 'index,follow', crumbs = true } = {}) {
+export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL, images = null, url: pageUrl = '', robots = 'index,follow', crumbs = true, profileSite = PROFILE_SITE } = {}) {
   const items = creatorsOf(page, creators);
   const url = pageUrl || `${siteUrl}/${page.slug}`;
   const title = page.title || page.h1;
@@ -286,11 +296,11 @@ export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL
       '@type': 'ItemList',
       name: page.h1,
       numberOfItems: items.length,
-      itemListElement: items.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, url: safeHttps(c.link) })),
+      itemListElement: items.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, url: profileHref(c, profileSite) })),
     },
   ].filter(Boolean);
   const grid = items.length
-    ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map((c, i) => tile(c, i, images)).join('\n')}\n</ol>`
+    ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map((c, i) => tile(c, i, images, profileSite)).join('\n')}\n</ol>`
     : '<p class="state">Nobody here yet.</p>';
   const relatedHtml = related.length
     ? `<section class="related" aria-labelledby="related-t"><h2 id="related-t">More tops</h2><ul>${related.map((p) => `<li><a href="/${esc(p.slug)}">${esc(p.h1)}</a></li>`).join('')}</ul></section>`
