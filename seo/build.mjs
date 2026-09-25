@@ -18,7 +18,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const SITE_URL = (process.env.SITE_URL || 'https://www.faveradar.xyz').replace(/\/+$/, '');
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-export const RESERVED_SLUGS = ['dev', 'pages', 'seo', 'tops', 'widget', 'sitemap', 'robots', 'index'];
+export const RESERVED_SLUGS = ['dev', 'pages', 'seo', 'tops', 'home', 'widget', 'sitemap', 'robots', 'index', 'api', 'img'];
 const USERNAME_RE = /^[a-z0-9._-]{2,40}$/i;
 const LIMITS = { h1: 120, title: 70, description: 200, keywords: 300, intro: 4000, outro: 8000 };
 const MAX_CREATORS = 500;
@@ -266,14 +266,14 @@ export function creatorsOf(page, creators) {
 }
 
 /** One page as HTML (published or not: the editor previews drafts too). */
-export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL, images = null } = {}) {
+export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL, images = null, url: pageUrl = '', robots = 'index,follow', crumbs = true } = {}) {
   const items = creatorsOf(page, creators);
-  const url = `${siteUrl}/${page.slug}`;
+  const url = pageUrl || `${siteUrl}/${page.slug}`;
   const title = page.title || page.h1;
   const image = items.map((c) => safeHttps(c.photo)).find(Boolean) || '';
   const related = pages.filter((p) => p.published && p.slug !== page.slug).slice(0, MAX_RELATED);
   const ld = [
-    {
+    crumbs && {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
@@ -288,7 +288,7 @@ export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL
       numberOfItems: items.length,
       itemListElement: items.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, url: safeHttps(c.link) })),
     },
-  ];
+  ].filter(Boolean);
   const grid = items.length
     ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map((c, i) => tile(c, i, images)).join('\n')}\n</ol>`
     : '<p class="state">Nobody here yet.</p>';
@@ -296,7 +296,7 @@ export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL
     ? `<section class="related" aria-labelledby="related-t"><h2 id="related-t">More tops</h2><ul>${related.map((p) => `<li><a href="/${esc(p.slug)}">${esc(p.h1)}</a></li>`).join('')}</ul></section>`
     : '';
   const body = `<header class="head"><div class="head-text">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="/tops">Tops</a> <span aria-hidden="true">/</span> <span aria-current="page">${esc(page.h1)}</span></nav>
+${crumbs ? `<nav class="crumbs" aria-label="Breadcrumb"><a href="/tops">Tops</a> <span aria-hidden="true">/</span> <span aria-current="page">${esc(page.h1)}</span></nav>` : ''}
 <h1>${esc(page.h1)}</h1>
 ${page.intro ? `<div class="intro">${paragraphs(page.intro)}</div>` : ''}
 </div></header>
@@ -304,7 +304,29 @@ ${grid}
 ${page.outro ? `<section class="seo-text">${paragraphs(page.outro)}</section>` : ''}
 ${relatedHtml}
 ${FOOTER}`;
-  return doc(head({ title, description: page.description, keywords: page.keywords, url, image, ld }), body);
+  return doc(head({ title, description: page.description, keywords: page.keywords, url, image, ld, robots }), body);
+}
+
+/** Home page (www.faveradar.xyz/home, where / without a widget signature redirects): every own creator, in the order of seo/creators.json. */
+export function homePage(creators) {
+  return {
+    slug: '',
+    h1: 'OnlyFans creators',
+    title: 'OnlyFans Creators: Hand-Picked Profiles',
+    description: 'Hand-picked OnlyFans creators with photos and direct links to their profiles, updated regularly.',
+    keywords: 'onlyfans creators, best onlyfans, onlyfans profiles',
+    intro: 'Hand-picked OnlyFans creators in one place. Tap a photo or "View profile" to open the creator\'s page.',
+    outro: '',
+    creators: creators.map((c) => c.username),
+    published: true,
+  };
+}
+
+/** The home page, and the same catalogue for every unknown address (404 for search engines, so no duplicates). */
+export function renderHome({ pages = [], creators = [], siteUrl = SITE_URL, images = null, notFound = false } = {}) {
+  return renderPage(homePage(creators), {
+    pages, creators, siteUrl, images, url: `${siteUrl}/home`, crumbs: false, robots: notFound ? 'noindex,follow' : 'index,follow',
+  });
 }
 
 /** The /tops index: every published page. */
@@ -339,6 +361,7 @@ export function renderSitemap({ pages = [], siteUrl = SITE_URL } = {}) {
   const day = (p) => String(p.updatedAt || new Date().toISOString()).slice(0, 10);
   const latest = pub.map(day).sort().pop();
   const urls = [
+    `  <url><loc>${xml(`${siteUrl}/home`)}</loc><lastmod>${latest || new Date().toISOString().slice(0, 10)}</lastmod></url>`,
     ...(pub.length ? [`  <url><loc>${xml(`${siteUrl}/tops`)}</loc><lastmod>${latest}</lastmod></url>`] : []),
     ...pub.map((p) => `  <url><loc>${xml(`${siteUrl}/${p.slug}`)}</loc><lastmod>${day(p)}</lastmod></url>`),
   ];
@@ -352,7 +375,8 @@ export function renderRobots({ siteUrl = SITE_URL } = {}) {
 // ---------------------------------------------------------------- build
 
 /**
- * Writes pages/<slug>.html for every published page, pages/tops.html, sitemap.xml and robots.txt into
+ * Writes pages/<slug>.html for every published page, pages/tops.html, pages/home.html (the catalogue of every
+ * creator, served at /home), 404.html (the same catalogue for unknown addresses), sitemap.xml and robots.txt into
  * `root`, and deletes pages/*.html that no longer belong to a published page.
  * @returns {{ written: string[], removed: string[] }} paths relative to root
  */
@@ -366,13 +390,15 @@ export function build({ root = ROOT, siteUrl = SITE_URL, data = loadData(root) }
     written.push(rel.replace(/\\/g, '/'));
   };
   const images = localImages(root, creators);
-  const keep = new Set(['tops.html']);
+  const keep = new Set(['tops.html', 'home.html']);
   for (const p of pages) {
     if (!p.published || !SLUG_RE.test(p.slug) || RESERVED_SLUGS.includes(p.slug)) continue;
     keep.add(`${p.slug}.html`);
     put(path.join('pages', `${p.slug}.html`), renderPage(p, { pages, creators, siteUrl, images }));
   }
   put(path.join('pages', 'tops.html'), renderIndex({ pages, creators, siteUrl }));
+  put(path.join('pages', 'home.html'), renderHome({ pages, creators, siteUrl, images }));
+  put('404.html', renderHome({ pages, creators, siteUrl, images, notFound: true }));
   put('sitemap.xml', renderSitemap({ pages, siteUrl }));
   put('robots.txt', renderRobots({ siteUrl }));
   const removed = [];

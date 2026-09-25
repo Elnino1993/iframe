@@ -21,7 +21,7 @@ test('slugs: slugify, format, length, reserved, unique', () => {
   for (const bad of ['Bad Slug', 'a', 'double--dash', '-start', 'end-', 'x'.repeat(81), 'кириллица']) {
     assert.throws(() => page({ slug: bad }), SeoError, bad);
   }
-  for (const reserved of ['tops', 'dev', 'pages', 'seo', 'sitemap', 'robots', 'index', 'widget']) {
+  for (const reserved of ['tops', 'home', 'dev', 'pages', 'seo', 'sitemap', 'robots', 'index', 'widget', 'api', 'img']) {
     assert.throws(() => page({ slug: reserved }), /служебн/, reserved);
   }
   const existing = [page()];
@@ -89,13 +89,24 @@ test('build: published pages, /tops, sitemap of published pages only, robots, st
     fs.writeFileSync(path.join(root, 'pages', 'old-page.html'), 'stale');
 
     const out = build({ root, siteUrl: SITE });
-    assert.deepEqual(out.written.sort(), ['pages/best-creators.html', 'pages/second-top.html', 'pages/tops.html', 'robots.txt', 'sitemap.xml']);
+    assert.deepEqual(out.written.sort(), ['404.html', 'pages/best-creators.html', 'pages/home.html', 'pages/second-top.html', 'pages/tops.html', 'robots.txt', 'sitemap.xml']);
+    // /home and every unknown address (404.html) show all creators; only /home is indexable
+    const home = fs.readFileSync(path.join(root, 'pages', 'home.html'), 'utf8');
+    const missing = fs.readFileSync(path.join(root, '404.html'), 'utf8');
+    for (const html of [home, missing]) {
+      assert.match(html, />Alice</);
+      assert.match(html, />Bob</);
+      assert.match(html, /rel="canonical" href="https:\/\/faveradar\.xyz\/home"/);
+    }
+    assert.match(home, /name="robots" content="index,follow"/);
+    assert.match(missing, /name="robots" content="noindex,follow"/);
     assert.deepEqual(out.removed, ['pages/old-page.html']);
     assert.ok(!fs.existsSync(path.join(root, 'pages', 'draft-page.html')));
 
     const sitemap = fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8');
     assert.match(sitemap, /<loc>https:\/\/faveradar\.xyz\/best-creators<\/loc><lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
     assert.match(sitemap, /<loc>https:\/\/faveradar\.xyz\/tops<\/loc>/);
+    assert.match(sitemap, /<loc>https:\/\/faveradar\.xyz\/home<\/loc>/);
     assert.doesNotMatch(sitemap, /draft-page/);
     assert.equal(fs.readFileSync(path.join(root, 'robots.txt'), 'utf8'), 'User-agent: *\nAllow: /\nSitemap: https://faveradar.xyz/sitemap.xml\n');
 

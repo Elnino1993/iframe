@@ -5,6 +5,9 @@
   "installCommand": "",
   "outputDirectory": ".",
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/", "missing": [{ "type": "query", "key": "sig" }], "destination": "/home", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/tops", "destination": "/pages/tops.html" },
     { "source": "/:slug([a-z0-9]+(?:-[a-z0-9]+)*)", "destination": "/pages/:slug.html" }

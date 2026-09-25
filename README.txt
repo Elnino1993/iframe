@@ -73,6 +73,9 @@ SEO-страницы
 всё хранится в этой папке и выкладывается на Vercel вместе с виджетом.
   https://www.faveradar.xyz/<адрес>      страница топа, например https://www.faveradar.xyz/best-onlyfans-creators
   https://www.faveradar.xyz/tops         список всех опубликованных топов (создаётся сам)
+  https://www.faveradar.xyz/home         все анкеты из seo/creators.json (создаётся сам); сюда ведёт
+                                         www.faveradar.xyz/ без подписи виджета
+  любой другой адрес                     показывает тот же каталог всех анкет (для Google это 404, не дубль)
   https://www.faveradar.xyz/sitemap.xml  карта сайта — добавьте её в Google Search Console
   https://www.faveradar.xyz/robots.txt   разрешает индексацию и указывает на sitemap
 
