@@ -7,3 +7,5 @@ package.json
 *.cmd
 # SEO data and build script: only the generated pages/, sitemap.xml and robots.txt are published
 seo/
+# generated files for sharing (PDF catalogue)
+dist/
