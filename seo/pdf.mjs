@@ -34,7 +34,7 @@ export function renderPdfHtml({ creators, title, subtitle, photos = new Map() })
     const file = photos.get(String(c.username).toLowerCase());
     return file ? pathToFileURL(file).href : https(c.photo);
   };
-  const tiles = creators.map((c, i) => {
+  const tile = (c, i) => {
     const href = esc(goHref(c)); // www.faveradar.xyz/go/<user> → Telegram notice → profile on faveradar.com
     const src = photo(c);
     const pic = src ? `<img src="${esc(src)}" alt="">` : `<span class="ini">${esc(initials(c.name))}</span>`;
@@ -44,48 +44,59 @@ export function renderPdfHtml({ creators, title, subtitle, photos = new Map() })
   <a class="shot" href="${href}">${pic}</a>
   <div class="cap">
     <div class="head"><span class="num${i < 3 ? ' top' : ''}">${i + 1}</span>
-      <div class="who"><div class="name">${esc(c.name)}${c.verified ? TICK : ''}</div><div class="meta">${esc(meta)}</div></div></div>
-    ${bio ? `<p class="bio">${esc(bio.length > 140 ? `${bio.slice(0, 139).trimEnd()}…` : bio)}</p>` : ''}
+      <div class="who"><div class="name"><span class="nm">${esc(c.name)}</span>${c.verified ? TICK : ''}</div><div class="meta">${esc(meta)}</div></div></div>
+    <p class="bio">${esc(bio)}</p>
     <a class="cta" href="${href}">View profile ${ARROW}</a>
   </div>
 </li>`;
-  }).join('\n');
+  };
+  // fixed pages: every A4 sheet is fully dark and holds the same 3 × 4 grid, so rows line up page after page
+  const PER_PAGE = 12;
+  const sheets = [];
+  for (let i = 0; i < Math.max(1, creators.length); i += PER_PAGE) sheets.push(creators.slice(i, i + PER_PAGE).map((c, k) => tile(c, i + k)));
   const date = new Date().toISOString().slice(0, 10);
+  const site = `<a class="site" href="${esc(SITE_URL)}/tops">${esc(SITE_URL.replace(/^https:\/\//, ''))}</a>`;
+  const pages = sheets.map((tiles, n) => `<section class="sheet">
+<header><div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div>${site}</header>
+<ol>
+${tiles.join('\n')}
+</ol>
+<footer><span>Tap a photo or "View profile" to open the creator's profile. Not affiliated with OnlyFans.</span><span>${date} · ${n + 1} / ${sheets.length}</span></footer>
+</section>`).join('\n');
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title>
 <style>
-  @page { size: A4; margin: 12mm 11mm 14mm; }
+  @page { size: 210mm 297mm; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html, body { margin: 0; background: #000; color: #f2f2f2; font: 10pt/1.4 system-ui, 'Segoe UI', Roboto, Arial, sans-serif; }
+  html, body { margin: 0; background: #000; color: #f2f2f2; font: 10pt/1.35 system-ui, 'Segoe UI', Roboto, Arial, sans-serif; }
   a { color: inherit; text-decoration: none; }
-  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12mm; padding-bottom: 4mm; margin-bottom: 6mm; border-bottom: 0.3mm solid #3a3a3a; }
-  h1 { margin: 0; font-size: 22pt; line-height: 1.1; letter-spacing: -0.02em; }
-  header p { margin: 2mm 0 0; color: #9b9b9b; }
+  .sheet { width: 210mm; height: 297mm; padding: 12mm 11mm 10mm; display: grid; grid-template-rows: 17mm 1fr 7mm; row-gap: 5mm; overflow: hidden; break-after: page; }
+  .sheet:last-child { break-after: auto; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 10mm; border-bottom: 0.3mm solid #3a3a3a; padding-bottom: 3mm; }
+  h1 { margin: 0; font-size: 20pt; line-height: 1.1; letter-spacing: -0.02em; }
+  header p { margin: 1.5mm 0 0; color: #9b9b9b; font-size: 9pt; }
   .site { color: #ff5cc6; white-space: nowrap; font-weight: 600; }
-  ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 7mm 5mm; }
-  .tile { break-inside: avoid; display: flex; flex-direction: column; gap: 2.5mm; }
-  .shot { display: grid; place-items: center; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 1mm; background: #111; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6mm 5mm; min-height: 0; }
+  .tile { display: grid; grid-template-rows: 1fr auto; row-gap: 2.5mm; min-height: 0; }
+  .shot { display: grid; place-items: center; min-height: 0; overflow: hidden; border-radius: 1mm; background: #111; }
   .shot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
   .ini { color: #9b9b9b; font-size: 24pt; font-weight: 300; }
-  .cap { display: flex; flex-direction: column; gap: 2mm; flex: 1; }
-  .head { display: flex; gap: 2mm; align-items: flex-start; }
-  .num { font-size: 16pt; line-height: 1; font-weight: 300; color: #9b9b9b; min-width: 5mm; }
+  .cap { display: grid; grid-template-rows: 9mm 4mm 8mm; row-gap: 1.5mm; }
+  .head { display: flex; gap: 2mm; align-items: flex-start; min-width: 0; }
+  .num { font-size: 16pt; line-height: 1; font-weight: 300; color: #9b9b9b; min-width: 6mm; flex: none; font-variant-numeric: tabular-nums; }
   .num.top { color: #ff5cc6; font-weight: 400; }
-  .who { min-width: 0; }
-  .name { font-weight: 700; display: flex; align-items: center; gap: 1mm; }
+  .who { min-width: 0; flex: 1; }
+  .name { font-weight: 700; display: flex; align-items: center; gap: 1mm; min-width: 0; line-height: 1.2; }
+  .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tick { width: 3.2mm; height: 3.2mm; color: #ff5cc6; flex: none; }
-  .meta { color: #9b9b9b; font-size: 8pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bio { margin: 0; color: #9b9b9b; font-size: 8pt; }
-  .cta { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 1.5mm; height: 8mm; border-radius: 1mm; background: #fd37b7; color: #000; font-weight: 700; font-size: 9pt; }
+  .meta { color: #9b9b9b; font-size: 8pt; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bio { margin: 0; color: #9b9b9b; font-size: 7.5pt; line-height: 4mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cta { display: flex; align-items: center; justify-content: center; gap: 1.5mm; border-radius: 1mm; background: #fd37b7; color: #000; font-weight: 700; font-size: 9pt; }
   .cta svg { width: 3mm; height: 3mm; }
-  footer { margin-top: 8mm; padding-top: 3mm; border-top: 0.3mm solid #262626; color: #9b9b9b; font-size: 8pt; display: flex; justify-content: space-between; }
+  footer { border-top: 0.3mm solid #262626; padding-top: 2mm; color: #9b9b9b; font-size: 7.5pt; display: flex; justify-content: space-between; gap: 6mm; }
 </style></head>
 <body>
-<header><div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div><a class="site" href="${esc(SITE_URL)}/tops">${esc(SITE_URL.replace(/^https:\/\//, ''))}</a></header>
-<ol>
-${tiles}
-</ol>
-<footer><span>Tap a photo or "View profile" to open the creator's profile. Not affiliated with OnlyFans.</span><span>${date}</span></footer>
+${pages}
 </body></html>`;
 }
 
