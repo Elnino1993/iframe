@@ -18,6 +18,7 @@ import {
 } from '../seo/build.mjs';
 import { optimizeImages, localImages } from '../seo/images.mjs';
 import { cleanEvent, formatMessage } from '../api/notify.mjs';
+import { goTarget, goEvent } from '../api/go.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 5173;
@@ -168,6 +169,14 @@ const server = http.createServer(async (req, res) => {
   }
   if (p === '/config.js') {
     return send(res, 200, '// dev: data from this local server (dev/mock.mjs)\nwindow.FAVERADAR_WIDGET = { api: "" };\n', TYPES['.js']);
+  }
+  const goOne = p.match(/^\/go\/([^/]+)$/);
+  if (goOne) {
+    // SEO pages and the PDF link here (api/go.mjs on Vercel): notice printed instead of sent, then the profile
+    const target = goTarget(goOne[1]);
+    if (!target) return send(res, 302, '', undefined, { Location: '/home' });
+    console.log(`\n[telegram, dev — not sent]\n${formatMessage(goEvent(goOne[1], target, req.headers), req.headers)}\n`);
+    return send(res, 302, '', undefined, { Location: target });
   }
   const go = p.match(/^\/go\/([^/]+)\/([^/]+)$/);
   if (go) {

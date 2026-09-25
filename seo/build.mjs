@@ -20,6 +20,13 @@ export const SITE_URL = (process.env.SITE_URL || 'https://www.faveradar.xyz').re
 // PROFILE_SITE= (empty) links straight to the OnlyFans link instead.
 export const PROFILE_SITE = (process.env.PROFILE_SITE ?? 'https://www.faveradar.com').replace(/\/+$/, '');
 
+/** Where the page links: through our own redirect www.faveradar.xyz/go/<username> (api/go.mjs: Telegram notice,
+ *  then the FaveRadar profile). Without PROFILE_SITE: straight to the creator's OnlyFans link. */
+export function goHref(c, siteUrl = SITE_URL, profileSite = PROFILE_SITE) {
+  if (!profileSite) return safeHttps(c.link);
+  return `${siteUrl}/go/${encodeURIComponent(c.username)}`;
+}
+
 /** Profile link of a creator: FaveRadar page when PROFILE_SITE is set, else the creator's own OnlyFans link. */
 export function profileHref(c, profileSite = PROFILE_SITE) {
   if (!profileSite) return safeHttps(c.link);
@@ -27,7 +34,7 @@ export function profileHref(c, profileSite = PROFILE_SITE) {
 }
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-export const RESERVED_SLUGS = ['dev', 'pages', 'seo', 'tops', 'home', 'widget', 'sitemap', 'robots', 'index', 'api', 'img'];
+export const RESERVED_SLUGS = ['dev', 'pages', 'seo', 'tops', 'home', 'go', 'widget', 'sitemap', 'robots', 'index', 'api', 'img'];
 const USERNAME_RE = /^[a-z0-9._-]{2,40}$/i;
 const LIMITS = { h1: 120, title: 70, description: 200, keywords: 300, intro: 4000, outro: 8000 };
 const MAX_CREATORS = 500;
@@ -251,11 +258,11 @@ function picture(c, i, base) {
     + `<img src="${base}-640.webp" ${attrs}></picture>`;
 }
 
-function tile(c, i, images, profileSite) {
-  const href = profileHref(c, profileSite);
+function tile(c, i, images, profileSite, siteUrl) {
+  const href = goHref(c, siteUrl, profileSite);
   const photo = safeHttps(c.photo);
-  // our own site passes on link value; a direct OnlyFans link stays marked as sponsored
-  const rel = profileSite ? 'noopener' : 'nofollow sponsored noopener';
+  // a redirect link passes nothing on; a direct OnlyFans link stays marked as sponsored
+  const rel = profileSite ? 'nofollow noopener' : 'nofollow sponsored noopener';
   const shot = photo
     ? picture(c, i, images && images.get(String(c.username).toLowerCase()))
     : `<span class="shot-initials">${esc(initials(c.name))}</span>`;
@@ -300,7 +307,7 @@ export function renderPage(page, { pages = [], creators = [], siteUrl = SITE_URL
     },
   ].filter(Boolean);
   const grid = items.length
-    ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map((c, i) => tile(c, i, images, profileSite)).join('\n')}\n</ol>`
+    ? `<ol class="grid" aria-label="${esc(page.h1)}">\n${items.map((c, i) => tile(c, i, images, profileSite, siteUrl)).join('\n')}\n</ol>`
     : '<p class="state">Nobody here yet.</p>';
   const relatedHtml = related.length
     ? `<section class="related" aria-labelledby="related-t"><h2 id="related-t">More tops</h2><ul>${related.map((p) => `<li><a href="/${esc(p.slug)}">${esc(p.h1)}</a></li>`).join('')}</ul></section>`

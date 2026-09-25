@@ -64,6 +64,26 @@ export function formatMessage(ev, headers = {}) {
   ].filter(Boolean).join('\n');
 }
 
+/** Sends one event to Telegram when the bot is configured and this kind of message is on. Never throws. */
+export async function sendNotice(ev, headers = {}, timeoutMs = 5000) {
+  const token = process.env.TG_TOKEN;
+  const chatId = process.env.TG_CHAT_ID;
+  if (!token || !chatId) return 'not-configured';
+  if (ev.type === 'visit' && process.env.TG_NOTIFY_VISITS === '0') return 'skipped';
+  if (ev.type === 'click' && process.env.TG_NOTIFY_CLICKS === '0') return 'skipped';
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: formatMessage(ev, headers), disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    return 'sent';
+  } catch {
+    return 'failed'; // a Telegram hiccup never breaks the page
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false });
   const h = req.headers || {};
@@ -74,21 +94,7 @@ export default async function handler(req, res) {
 
   const ev = cleanEvent(req.body);
   if (!ev) return res.status(400).json({ ok: false });
-  const token = process.env.TG_TOKEN;
-  const chatId = process.env.TG_CHAT_ID;
-  if (!token || !chatId) return res.status(200).json({ ok: false, error: 'not-configured' });
-  if (ev.type === 'visit' && process.env.TG_NOTIFY_VISITS === '0') return res.status(200).json({ ok: true, skipped: true });
-  if (ev.type === 'click' && process.env.TG_NOTIFY_CLICKS === '0') return res.status(200).json({ ok: true, skipped: true });
-
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: formatMessage(ev, h), disable_web_page_preview: true }),
-      signal: AbortSignal.timeout(5000),
-    });
-  } catch {
-    // a Telegram hiccup never breaks the page
-  }
-  return res.status(200).json({ ok: true });
+  const result = await sendNotice(ev, h);
+  if (result === 'not-configured') return res.status(200).json({ ok: false, error: 'not-configured' });
+  return res.status(200).json({ ok: true, ...(result === 'skipped' ? { skipped: true } : {}) });
 }

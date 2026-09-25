@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { ROOT, SITE_URL, esc, loadData, creatorsOf, profileHref } from './build.mjs';
+import { ROOT, SITE_URL, esc, loadData, creatorsOf, goHref } from './build.mjs';
 import { localImages } from './images.mjs';
 
 const BROWSERS = [
@@ -35,7 +35,7 @@ export function renderPdfHtml({ creators, title, subtitle, photos = new Map() })
     return file ? pathToFileURL(file).href : https(c.photo);
   };
   const tiles = creators.map((c, i) => {
-    const href = esc(profileHref(c)); // the creator's page on faveradar.com, which links on to OnlyFans
+    const href = esc(goHref(c)); // www.faveradar.xyz/go/<user> → Telegram notice → profile on faveradar.com
     const src = photo(c);
     const pic = src ? `<img src="${esc(src)}" alt="">` : `<span class="ini">${esc(initials(c.name))}</span>`;
     const meta = ['@' + c.username, c.place].filter(Boolean).join(' · ');

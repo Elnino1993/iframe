@@ -67,7 +67,7 @@ test('rendering: meta, canonical, JSON-LD, tiles link to the creator profile, ev
   assert.match(html, /<nav class="crumbs"[^>]*><a href="\/tops">Tops<\/a>/);
   const tiles = html.match(/<li class="tile">[\s\S]*?<\/li>/g);
   assert.equal(tiles.length, 2);
-  assert.match(tiles[0], /href="https:\/\/www\.faveradar\.com\/#\/c\/alice_x" target="_blank" rel="noopener"/, 'profile on the FaveRadar site');
+  assert.match(tiles[0], /href="https:\/\/faveradar\.xyz\/go\/alice_x" target="_blank" rel="nofollow noopener"/, 'through our /go redirect');
   const direct = renderPage(page(), { creators, siteUrl: SITE, profileSite: '' });
   assert.match(direct, /href="https:\/\/onlyfans\.com\/alice_x\/c12" target="_blank" rel="nofollow sponsored noopener"/, 'PROFILE_SITE empty → OnlyFans');
   assert.match(tiles[0], /alt="Alice OnlyFans"/);

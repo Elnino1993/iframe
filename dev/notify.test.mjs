@@ -56,3 +56,26 @@ test('handler: POST only, own origin only, quiet when the bot is not configured'
   await handler({ method: 'POST', headers: { host: 'www.faveradar.xyz', origin: 'https://www.faveradar.xyz' }, body: '{"type":"visit","page":"/best"}' }, r);
   assert.deepEqual([r.code, r.body.error], [200, 'not-configured']);
 });
+
+test('/go/<username>: notice then redirect to the FaveRadar profile; never an open redirect', async () => {
+  const { default: go, goTarget, goEvent } = await import('../api/go.mjs');
+  assert.equal(goTarget('ellablonde'), 'https://www.faveradar.com/#/c/ellablonde');
+  for (const bad of ['', 'x', 'evil.com/path', '//evil.com', 'a b', 'x'.repeat(41)]) assert.equal(goTarget(bad), null, bad);
+  const ev = goEvent('ellablonde', goTarget('ellablonde'), {});
+  assert.equal(ev.page, 'PDF или прямая ссылка', 'no Referer: opened from the PDF');
+  assert.match(formatMessage(ev, {}), /Переход на анкету\nАнкета: @ellablonde\nСсылка: https:\/\/www\.faveradar\.com\/#\/c\/ellablonde/);
+
+  delete process.env.TG_TOKEN;
+  const res = () => {
+    const r = { statusCode: 0, headers: {} };
+    r.setHeader = (k, v) => { r.headers[k.toLowerCase()] = v; };
+    r.end = () => r;
+    return r;
+  };
+  let r = res();
+  await go({ query: { u: 'ellablonde' }, headers: { 'user-agent': 'Mozilla/5.0' } }, r);
+  assert.deepEqual([r.statusCode, r.headers.location, r.headers['cache-control']], [302, 'https://www.faveradar.com/#/c/ellablonde', 'no-store']);
+  r = res();
+  await go({ query: { u: '//evil.com' }, headers: {} }, r);
+  assert.deepEqual([r.statusCode, r.headers.location], [302, '/home']);
+});

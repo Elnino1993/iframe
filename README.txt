@@ -120,12 +120,13 @@ PDF-каталог анкет
 -----------------
   node seo/pdf.mjs                       → dist/faveradar-creators.pdf — все анкеты из seo/creators.json
   node seo/pdf.mjs --page <адрес>        → dist/faveradar-<адрес>.pdf — анкеты одной SEO-страницы по порядку
-Фото и кнопка «View profile» в PDF кликабельны и ведут на профиль анкеты на www.faveradar.com. Берёт фото из img/c
+Фото и кнопка «View profile» в PDF кликабельны: www.faveradar.xyz/go/<ник> → профиль на www.faveradar.com. Берёт фото из img/c
 (сначала соберите страницы), печатает через Chrome или Edge. Папка dist/ не выкладывается и не попадает в git.
 
 Куда ведут анкеты
 -----------------
-Фото и «View profile» на страницах faveradar.xyz ведут на страницу анкеты на faveradar.com
+Фото и «View profile» на страницах faveradar.xyz и в PDF ведут на www.faveradar.xyz/go/<ник>: эта переадресация
+(функция api/go.mjs) присылает уведомление о клике в Telegram и сразу открывает страницу анкеты на faveradar.com
 (https://www.faveradar.com/#/c/<ник>), а уже там — ссылка на OnlyFans. Анкеты должны быть на faveradar.com
 с тем же ником (на сервере сайта: node scripts/import-stayslutty.mjs --keep-demo).
 Вернуть прямые ссылки на OnlyFans: собрать страницы с пустым PROFILE_SITE —

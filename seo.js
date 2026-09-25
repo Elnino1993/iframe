@@ -66,5 +66,5 @@
 
   photoFallbacks();
   reportVisit(location.pathname);
-  watchClicks(document, location.pathname, 'a.cta, a.shot');
+  // clicks: reported by the /go/<username> redirect (api/go.mjs), which the tiles link through
 })();
