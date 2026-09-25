@@ -67,7 +67,7 @@ test('rendering: meta, canonical, JSON-LD, tiles link to the creator profile, ev
   assert.match(html, /<nav class="crumbs"[^>]*><a href="\/tops">Tops<\/a>/);
   const tiles = html.match(/<li class="tile">[\s\S]*?<\/li>/g);
   assert.equal(tiles.length, 2);
-  assert.match(tiles[0], /href="https:\/\/faveradar\.com\/#\/c\/alice_x" target="_blank" rel="noopener"/, 'profile on the FaveRadar site');
+  assert.match(tiles[0], /href="https:\/\/www\.faveradar\.com\/#\/c\/alice_x" target="_blank" rel="noopener"/, 'profile on the FaveRadar site');
   const direct = renderPage(page(), { creators, siteUrl: SITE, profileSite: '' });
   assert.match(direct, /href="https:\/\/onlyfans\.com\/alice_x\/c12" target="_blank" rel="nofollow sponsored noopener"/, 'PROFILE_SITE empty → OnlyFans');
   assert.match(tiles[0], /alt="Alice OnlyFans"/);
@@ -78,7 +78,7 @@ test('rendering: meta, canonical, JSON-LD, tiles link to the creator profile, ev
   assert.match(tiles[1], /<span class="shot-initials">B<\/span>/, 'no photo → initials');
   const lds = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
   assert.deepEqual(lds.map((x) => x['@type']), ['BreadcrumbList', 'ItemList']);
-  assert.equal(lds[1].itemListElement[0].url, 'https://faveradar.com/#/c/alice_x');
+  assert.equal(lds[1].itemListElement[0].url, 'https://www.faveradar.com/#/c/alice_x');
 });
 
 test('build: published pages, /tops, sitemap of published pages only, robots, stale pages removed', () => {

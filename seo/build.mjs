@@ -18,7 +18,7 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const SITE_URL = (process.env.SITE_URL || 'https://www.faveradar.xyz').replace(/\/+$/, '');
 // Where "View profile" and the photo lead: the creator's page on the FaveRadar site, which then links to OnlyFans.
 // PROFILE_SITE= (empty) links straight to the OnlyFans link instead.
-export const PROFILE_SITE = (process.env.PROFILE_SITE ?? 'https://faveradar.com').replace(/\/+$/, '');
+export const PROFILE_SITE = (process.env.PROFILE_SITE ?? 'https://www.faveradar.com').replace(/\/+$/, '');
 
 /** Profile link of a creator: FaveRadar page when PROFILE_SITE is set, else the creator's own OnlyFans link. */
 export function profileHref(c, profileSite = PROFILE_SITE) {

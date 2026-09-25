@@ -126,7 +126,7 @@ PDF-каталог анкет
 Куда ведут анкеты
 -----------------
 Фото и «View profile» на страницах faveradar.xyz ведут на страницу анкеты на faveradar.com
-(https://faveradar.com/#/c/<ник>), а уже там — ссылка на OnlyFans. Анкеты должны быть на faveradar.com
+(https://www.faveradar.com/#/c/<ник>), а уже там — ссылка на OnlyFans. Анкеты должны быть на faveradar.com
 с тем же ником (на сервере сайта: node scripts/import-stayslutty.mjs --keep-demo).
 Вернуть прямые ссылки на OnlyFans: собрать страницы с пустым PROFILE_SITE —
   PowerShell:  $env:PROFILE_SITE=''; node seo/build.mjs
