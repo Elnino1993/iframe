@@ -10,7 +10,7 @@
   widget.js     вся логика: загрузка данных, 18+, виды карточек (cards / photos / list), скрытие полей
   widget.css    оформление: цвета, карточки, 2 колонки с горизонтальным фото, мобильная версия, SEO-страницы
   seo.js        окно 18+ и заглушки для битых фото на SEO-страницах (ответ 18+ общий с виджетом — ключ fr:age)
-  config.js     адрес сервера данных: api: 'https://api.faveradar.com'
+  config.js     адрес сервера данных: api: 'https://www.faveradar.com'
   vercel.json   настройки Vercel: iframe (frame-ancestors *) и no-cache для виджета, адреса SEO-страниц
                 (/tops и /<адрес> → pages/…html), кэш 5 минут для страниц, sitemap и robots
   .vercelignore что не выкладывается на Vercel (README, dev/, seo/, package.json, *.cmd)
@@ -120,7 +120,7 @@ PDF-каталог анкет
 -----------------
   node seo/pdf.mjs                       → dist/faveradar-creators.pdf — все анкеты из seo/creators.json
   node seo/pdf.mjs --page <адрес>        → dist/faveradar-<адрес>.pdf — анкеты одной SEO-страницы по порядку
-Фото и кнопка «View profile» в PDF кликабельны и ведут на ссылку OnlyFans анкеты. Берёт сжатые фото из img/c
+Фото и кнопка «View profile» в PDF кликабельны и ведут на профиль анкеты на www.faveradar.com. Берёт фото из img/c
 (сначала соберите страницы), печатает через Chrome или Edge. Папка dist/ не выкладывается и не попадает в git.
 
 Куда ведут анкеты
